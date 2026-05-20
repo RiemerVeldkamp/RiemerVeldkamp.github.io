@@ -343,7 +343,7 @@ function extractSpotifyId(url){
 // ── Spotify Web Playback SDK ──
 // Vul hieronder jouw Spotify Client ID in (zie instructies)
 const SPOTIFY_CLIENT_ID = '08da228407984f76887a040ca7f0a2ee';
-const REDIRECT_URI = 'https://riemerveldkamp.github.io/index.html';
+const REDIRECT_URI = 'https://riemer.github.io';
 
 let spotifyPlayer=null, spotifyDeviceId=null, spotifyToken=null;
 let currentSpotifyId=null;
@@ -355,7 +355,9 @@ function base64url(buf){
     .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 async function generatePKCE(){
-  const verifier=base64url(crypto.getRandomValues(new Uint8Array(32)));
+  const arr=new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  const verifier=base64url(arr);
   const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));
   const challenge=base64url(hash);
   return{verifier,challenge};
@@ -363,12 +365,17 @@ async function generatePKCE(){
 
 async function spotifyLogin(){
   const {verifier,challenge}=await generatePKCE();
-  localStorage.setItem('sp_verifier',verifier);
+  // Sla verifier op — na redirect komen we terug op dezelfde pagina (GitHub Pages)
+  sessionStorage.setItem('sp_verifier',verifier);
+  localStorage.setItem('sp_verifier',verifier); // backup
   const scopes='streaming user-read-email user-read-private user-modify-playback-state';
-  const url='https://accounts.spotify.com/authorize?response_type=code&client_id='+SPOTIFY_CLIENT_ID
+  const url='https://accounts.spotify.com/authorize'
+    +'?response_type=code'
+    +'&client_id='+SPOTIFY_CLIENT_ID
     +'&scope='+encodeURIComponent(scopes)
     +'&redirect_uri='+encodeURIComponent(REDIRECT_URI)
-    +'&code_challenge_method=S256&code_challenge='+challenge;
+    +'&code_challenge_method=S256'
+    +'&code_challenge='+challenge;
   location.href=url;
 }
 
@@ -376,10 +383,15 @@ async function handleCallback(){
   const params=new URLSearchParams(location.search);
   const code=params.get('code');
   if(!code)return null;
-  const verifier=localStorage.getItem('sp_verifier');
-  if(!verifier)return null;
-  // Wis code uit URL
+  // Haal verifier op (probeer beide storage)
+  const verifier=sessionStorage.getItem('sp_verifier')||localStorage.getItem('sp_verifier');
+  if(!verifier){
+    showSpError('Sessiefout: sluit de browser, open de app opnieuw en log opnieuw in.');
+    return null;
+  }
   history.replaceState(null,'',location.pathname);
+  sessionStorage.removeItem('sp_verifier');
+  localStorage.removeItem('sp_verifier');
   const resp=await fetch('https://accounts.spotify.com/api/token',{
     method:'POST',
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
@@ -391,20 +403,23 @@ async function handleCallback(){
       code_verifier:verifier
     })
   });
-  if(!resp.ok)return null;
+  if(!resp.ok){
+    const err=await resp.json().catch(()=>({}));
+    showSpError('Inlogfout: '+(err.error_description||resp.status)+'. Probeer opnieuw in te loggen.');
+    return null;
+  }
   const data=await resp.json();
   const tok=data.access_token;
   localStorage.setItem('sp_token',tok);
-  localStorage.setItem('sp_token_exp',Date.now()+data.expires_in*1000);
+  localStorage.setItem('sp_token_exp',String(Date.now()+data.expires_in*1000));
   if(data.refresh_token)localStorage.setItem('sp_refresh',data.refresh_token);
-  localStorage.removeItem('sp_verifier');
   return tok;
 }
 
 function getStoredToken(){
   const tok=localStorage.getItem('sp_token');
   const exp=parseInt(localStorage.getItem('sp_token_exp')||'0');
-  if(tok&&Date.now()<exp)return tok;
+  if(tok&&Date.now()<exp-60000)return tok; // 1 min marge
   return null;
 }
 
@@ -502,12 +517,18 @@ function openSpotifyTab(){
 
 // Start SDK bij laden
 document.addEventListener('DOMContentLoaded',async()=>{
-  // Eerst checken of we terugkomen van Spotify login (code in URL)
   let tok=null;
-  if(location.search.includes('code=')){
+  if(location.search.includes('code=')||location.search.includes('error=')){
+    // Terugkeer van Spotify login
     document.getElementById('sp-loading').style.display='block';
     document.getElementById('sp-login-box').style.display='none';
     document.getElementById('spotify-placeholder').style.display='none';
+    if(location.search.includes('error=')){
+      const e=new URLSearchParams(location.search).get('error');
+      history.replaceState(null,'',location.pathname);
+      showSpError('Inloggen geannuleerd of mislukt: '+e);
+      return;
+    }
     tok=await handleCallback();
   }
   if(!tok)tok=getStoredToken();
