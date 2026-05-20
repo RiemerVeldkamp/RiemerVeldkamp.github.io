@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎵 Muziek Bingo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold:#F0C040;--gold-light:#FAE08A;--gold-dark:#B8860B;
+    --bg:#0E0A1A;--bg2:#1A1330;--bg3:#251C42;
+    --text:#F5EFD8;--text-muted:#9585BB;
+    --teal:#3ECFB2;--teal-dark:#1A8F7A;
+    --pink:#F06090;--purple:#7B5EA7;
+    --card-bg:rgba(37,28,66,0.85);
+    --border:rgba(240,192,64,0.2);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(123,94,167,.18) 0%,transparent 60%),
+               radial-gradient(ellipse 60% 50% at 80% 80%,rgba(62,207,178,.12) 0%,transparent 55%),
+               radial-gradient(ellipse 50% 40% at 60% 30%,rgba(240,192,64,.07) 0%,transparent 50%)}
+  .stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .star{position:absolute;border-radius:50%;background:white;animation:twinkle var(--dur,3s) ease-in-out infinite;opacity:0}
+  @keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:var(--op,.6);transform:scale(1)}}
+  .vinyl{position:fixed;border-radius:50%;background:conic-gradient(#1a1330 0deg 30deg,#251c42 30deg 60deg,#1a1330 60deg 90deg,#251c42 90deg 120deg,#1a1330 120deg 150deg,#251c42 150deg 180deg,#1a1330 180deg 210deg,#251c42 210deg 240deg,#1a1330 240deg 270deg,#251c42 270deg 300deg,#1a1330 300deg 330deg,#251c42 330deg 360deg);opacity:.4;z-index:0;animation:spin var(--spd,20s) linear infinite}
+  .vinyl::after{content:'';position:absolute;inset:30%;border-radius:50%;background:var(--bg);border:2px solid var(--gold-dark)}
+  .vinyl-1{width:340px;height:340px;top:-100px;right:-100px;--spd:25s}
+  .vinyl-2{width:200px;height:200px;bottom:60px;left:-60px;--spd:18s;animation-direction:reverse;opacity:.25}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  header{position:relative;z-index:10;text-align:center;padding:3rem 2rem 2rem}
+  .logo-badge{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Playfair Display',serif;font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;letter-spacing:-1px;line-height:1}
+  .logo-badge .note{-webkit-text-fill-color:var(--gold);font-size:.8em}
+  header p{color:var(--text-muted);font-size:1rem;font-weight:300;letter-spacing:.15em;text-transform:uppercase;margin-top:.5rem}
+
+  .container{position:relative;z-index:10;max-width:1100px;margin:0 auto;padding:0 1.5rem 4rem}
+
+  .tabs{display:flex;gap:6px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:18px;padding:6px;margin-bottom:2rem;backdrop-filter:blur(8px)}
+  .tab{flex:1;padding:12px 8px;border:none;border-radius:14px;background:transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
+  .tab.active{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#0E0A1A;font-weight:700;box-shadow:0 4px 20px rgba(240,192,64,.3)}
+  .section{display:none}
+  .section.active{display:block;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .panel{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:1.75rem;margin-bottom:1.25rem;backdrop-filter:blur(12px)}
+  .panel-title{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold-light);margin-bottom:1rem}
+
+  input[type="text"],input[type="url"],input[type="number"],select{
+    background:rgba(255,255,255,.06);border:1px solid rgba(240,192,64,.25);border-radius:12px;
+    color:var(--text);font-family:'DM Sans',sans-serif;font-size:.95rem;padding:12px 16px;width:100%;outline:none;
+    transition:border-color .2s,box-shadow .2s}
+  input::placeholder{color:var(--text-muted)}
+  input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,192,64,.15)}
+  select option{background:var(--bg2)}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:12px 22px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.06);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap}
+  .btn:hover{background:rgba(255,255,255,.12);border-color:rgba(240,192,64,.4)}
+  .btn-gold{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#0E0A1A;border:none;font-weight:700;box-shadow:0 4px 18px rgba(240,192,64,.25)}
+  .btn-gold:hover{box-shadow:0 6px 24px rgba(240,192,64,.45);transform:translateY(-1px)}
+  .btn-teal{background:rgba(62,207,178,.15);border-color:rgba(62,207,178,.35);color:var(--teal)}
+  .btn-teal:hover{background:rgba(62,207,178,.25)}
+  .btn-danger{color:var(--pink);border-color:rgba(240,96,144,.3)}
+  .btn-danger:hover{background:rgba(240,96,144,.1)}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem}
+  .btn-big{padding:16px 36px;font-size:1.1rem;border-radius:16px}
+
+  .song-list{list-style:none;max-height:340px;overflow-y:auto}
+  .song-list::-webkit-scrollbar{width:4px}
+  .song-list::-webkit-scrollbar-thumb{background:var(--purple);border-radius:4px}
+  .song-item{display:flex;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);gap:8px}
+  .song-item:last-child{border-bottom:none}
+  .song-num{color:var(--gold);font-size:.75rem;font-weight:700;min-width:26px;opacity:.7;padding-top:3px}
+  .song-info{flex:1;min-width:0}
+  .song-info .stitle{font-weight:500;font-size:.95rem}
+  .song-info .artist{color:var(--text-muted);font-size:.82rem;margin-top:1px}
+  .sp-badge{font-size:.7rem;padding:2px 8px;border-radius:20px;background:rgba(30,215,96,.15);border:1px solid rgba(30,215,96,.3);color:#1ED760;white-space:nowrap;flex-shrink:0}
+  .no-sp-badge{font-size:.7rem;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--text-muted);white-space:nowrap;flex-shrink:0}
+  .del-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px 8px;border-radius:8px;font-size:1rem;transition:color .2s;flex-shrink:0}
+  .del-btn:hover{color:var(--pink)}
+  .sp-inline{margin-top:6px}
+  .sp-inline input{font-size:.8rem;padding:6px 10px;border-radius:8px}
+
+  .add-song-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .sp-add-row{display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:10px;align-items:center}
+
+  .stat-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(62,207,178,.1);border:1px solid rgba(62,207,178,.25);border-radius:30px;padding:5px 14px;font-size:.85rem;color:var(--teal);margin-top:.5rem}
+  .stat-badge.warn{background:rgba(240,192,64,.1);border-color:rgba(240,192,64,.25);color:var(--gold)}
+
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem}
+  .player-card{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:1.25rem;backdrop-filter:blur(12px);transition:transform .2s}
+  .player-card:hover{transform:translateY(-3px)}
+  .player-card-header{display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+  .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--teal));display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:white;flex-shrink:0}
+  .player-name-input{background:transparent;border:none;color:var(--text);font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;width:100%;outline:none;cursor:text}
+  .player-name-input:focus{border-bottom:1px solid var(--gold)}
+  .bingo-header-row,.bingo-mini-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+  .bingo-header-row{margin-bottom:3px}
+  .bingo-letter{text-align:center;font-family:'Playfair Display',serif;font-size:1rem;font-weight:900;color:var(--gold)}
+  .mini-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:6px;font-size:8px;padding:3px;line-height:1.2;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--text-muted);transition:all .2s;overflow:hidden}
+  .mini-cell.marked{background:linear-gradient(135deg,var(--teal-dark),var(--teal));border-color:var(--teal);color:#0E0A1A;font-weight:700}
+  .mini-cell.free{background:linear-gradient(135deg,var(--purple),#A07DD0);border-color:#A07DD0;color:white;font-size:14px}
+  .mini-cell.bingo-win{background:linear-gradient(135deg,var(--gold-dark),var(--gold));border-color:var(--gold);color:#0E0A1A;font-weight:700;animation:pulse .6s ease-in-out infinite alternate}
+  @keyframes pulse{from{box-shadow:0 0 4px var(--gold)}to{box-shadow:0 0 12px var(--gold),0 0 20px rgba(240,192,64,.4)}}
+
+  /* ── SPOTIFY PLAYER ── */
+  .spotify-section{margin-bottom:1.25rem}
+  .spotify-placeholder{width:100%;height:152px;border-radius:20px;border:2px dashed rgba(30,215,96,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(255,255,255,.02);color:var(--text-muted);font-size:.9rem}
+  .spotify-placeholder .vicon{font-size:3rem}
+  .spotify-wrapper{width:100%;border-radius:20px;overflow:hidden;border:1px solid rgba(30,215,96,.3);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+  .spotify-wrapper iframe{width:100%;height:152px;border:none;display:block}
+  .spotify-controls{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center}
+  #sp-player-ui{display:flex;gap:1.5rem;align-items:center;background:var(--card-bg);border:1px solid rgba(30,215,96,.3);border-radius:20px;padding:1.5rem;}
+  #sp-login-box{display:flex;flex-direction:column;align-items:center;}
+
+  .now-playing{background:var(--card-bg);border:1px solid var(--border);border-radius:24px;padding:2rem 2rem 1.5rem;backdrop-filter:blur(12px);margin-bottom:1.25rem;position:relative;overflow:hidden}
+  .now-playing::before{content:'♪';position:absolute;font-size:12rem;color:rgba(240,192,64,.04);top:-2rem;left:-2rem;font-family:serif;pointer-events:none}
+  .np-label{font-size:.75rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.75rem}
+  .np-title{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:900;color:var(--gold-light);line-height:1.1;margin-bottom:.3rem;min-height:1.4em}
+  .np-artist{font-size:1.05rem;color:var(--teal);margin-bottom:.5rem;min-height:1.4em}
+  .np-count{font-size:.85rem;color:var(--text-muted)}
+  .progress-bar{height:3px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:1rem;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));border-radius:3px;transition:width .5s ease}
+
+  .win-banner{display:none;background:linear-gradient(135deg,#B8860B,var(--gold),#F5E08A,var(--gold));background-size:200% 200%;animation:shimmer 2s ease infinite;border-radius:20px;padding:1.5rem 2rem;text-align:center;margin-bottom:1.5rem;color:#0E0A1A}
+  @keyframes shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  .win-banner .win-title{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900}
+  .win-banner .win-sub{font-size:1rem;margin-top:.25rem;font-weight:500}
+
+  .called-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:.75rem;max-height:110px;overflow-y:auto}
+  .called-chip{padding:4px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:30px;font-size:.78rem;color:var(--text-muted)}
+  .called-chip.latest{background:rgba(62,207,178,.15);border-color:rgba(62,207,178,.4);color:var(--teal);font-weight:600}
+
+  .play-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;margin-top:1.25rem}
+  .play-card{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:1.25rem;backdrop-filter:blur(12px);transition:all .3s}
+  .play-card.has-bingo{border-color:var(--gold);box-shadow:0 0 30px rgba(240,192,64,.25)}
+  .play-card-header{display:flex;align-items:center;gap:10px;margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+
+  .controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1.25rem}
+  .num-select-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  label.lbl{font-size:.9rem;color:var(--text-muted)}
+
+  .note-float{position:fixed;pointer-events:none;z-index:5;font-size:1.5rem;color:rgba(240,192,64,.15);animation:floatUp 6s ease-in forwards}
+  @keyframes floatUp{0%{opacity:0;transform:translateY(0) rotate(0deg)}10%{opacity:1}90%{opacity:.5}100%{opacity:0;transform:translateY(-80vh) rotate(30deg)}}
+
+  @media(max-width:640px){
+    .add-song-grid{grid-template-columns:1fr}
+    .sp-add-row{grid-template-columns:1fr}
+    .tabs{border-radius:14px}
+    .tab{font-size:.8rem;padding:10px 6px}
+    header{padding:2rem 1rem 1.5rem}
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="vinyl vinyl-1"></div>
+<div class="vinyl vinyl-2"></div>
+
+<header>
+  <div class="logo-badge"><span class="note">♪</span> Muziek Bingo <span class="note">♫</span></div>
+  <p>Het ultieme feest voor muziekliefhebbers</p>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('songs',this)"><span>🎵</span> Nummers</button>
+    <button class="tab" onclick="showTab('cards',this)"><span>🎴</span> Kaarten</button>
+    <button class="tab" onclick="showTab('play',this)"><span>🎬</span> Spelen</button>
+  </div>
+
+  <!-- ══ NUMMERS ══ -->
+  <div class="section active" id="tab-songs">
+    <div class="panel">
+      <div class="panel-title">🎵 Nummer toevoegen</div>
+      <div class="add-song-grid">
+        <input type="text" id="inp-title" placeholder="Songtitel..." onkeydown="if(event.key==='Enter')document.getElementById('inp-artist').focus()">
+        <input type="text" id="inp-artist" placeholder="Artiest..." onkeydown="if(event.key==='Enter')document.getElementById('inp-spotify').focus()">
+      </div>
+      <div class="sp-add-row">
+        <input type="url" id="inp-spotify" placeholder="🎵 Spotify link — bv. https://open.spotify.com/track/..." onkeydown="if(event.key==='Enter')addSong()">
+        <button class="btn btn-gold" onclick="addSong()">＋ Toevoegen</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-teal" onclick="loadDemo()">✨ Demo nummers laden (30 met clips)</button>
+        <button class="btn" onclick="exportSongs()">💾 Exporteer nummers</button>
+        <label class="btn" style="cursor:pointer;">📂 Importeer nummers<input type="file" accept=".json" onchange="importSongs(event)" style="display:none;"></label>
+        <button class="btn btn-danger" onclick="clearSongs()">🗑 Alles wissen & opnieuw beginnen</button>
+      </div>
+      <div id="song-count"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Nummers <span id="sp-count-badge" style="font-family:'DM Sans',sans-serif;font-weight:400;font-size:.82rem;color:var(--text-muted);"></span></div>
+      <ul class="song-list" id="song-list"></ul>
+    </div>
+  </div>
+
+  <!-- ══ KAARTEN ══ -->
+  <div class="section" id="tab-cards">
+    <div class="panel">
+      <div class="panel-title">🎴 Kaarten genereren</div>
+      <div class="num-select-row" style="margin-bottom:1rem;">
+        <label class="lbl">Aantal spelers:</label>
+        <input type="number" id="num-players" min="1" max="100" value="2" style="width:80px;text-align:center;">
+        <button class="btn btn-gold" onclick="generateCards()">🎲 Genereer kaarten</button>
+        <button class="btn" onclick="printCards(1)" id="btn-print" style="display:none;">🖨️ Afdrukken (1 per A4)</button>
+        <button class="btn" onclick="printCards(4)" id="btn-print4" style="display:none;">🖨️ Afdrukken (4 per A4)</button>
+      </div>
+      <div id="cards-status"></div>
+    </div>
+    <div id="cards-container"></div>
+  </div>
+
+  <!-- ══ SPELEN ══ -->
+  <div class="section" id="tab-play">
+    <div class="win-banner" id="win-banner">
+      <div class="win-title">🏆 BINGO!</div>
+      <div class="win-sub" id="win-name"></div>
+    </div>
+
+    <!-- Spotify SDK Player -->
+    <div class="spotify-section" id="spotify-section">
+      <!-- Login scherm -->
+      <div id="sp-login-box" style="background:var(--card-bg);border:1px solid rgba(30,215,96,.3);border-radius:20px;padding:2rem;text-align:center;display:none;flex-direction:column;align-items:center;gap:14px;">
+        <div style="font-size:2.5rem;">🎧</div>
+        <div style="font-family:'Playfair Display',serif;color:var(--gold-light);font-size:1.1rem;">Verbind met Spotify</div>
+        <div style="color:var(--text-muted);font-size:.88rem;max-width:360px;">Klik op de knop om in te loggen. Daarna starten clips automatisch bij elk volgend nummer.</div>
+        <button class="btn" style="background:#1DB954;border:none;color:#000;font-weight:700;padding:14px 32px;font-size:1rem;border-radius:30px;" onclick="spotifyLogin()">🟢 Inloggen met Spotify</button>
+        <div style="font-size:.78rem;color:var(--text-muted);">Eenmalig per sessie · Gratis Spotify-account volstaat niet voor afspelen — Premium vereist</div>
+      </div>
+      <!-- Wacht op SDK init -->
+      <div id="sp-loading" style="background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:1.5rem;text-align:center;display:none;color:var(--text-muted);font-size:.9rem;">
+        ⏳ Spotify verbinden...
+      </div>
+      <!-- Player UI -->
+      <div id="sp-player-ui" style="display:none;background:var(--card-bg);border:1px solid rgba(30,215,96,.3);border-radius:20px;padding:1.5rem;align-items:center;gap:1.5rem;">
+        <img id="sp-cover" src="" alt="" style="width:80px;height:80px;border-radius:10px;object-fit:cover;flex-shrink:0;background:#333;">
+        <div style="flex:1;min-width:0;">
+          <div id="sp-track-name" style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold-light);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+          <div id="sp-track-artist" style="color:#1DB954;font-size:.9rem;margin-top:3px;">—</div>
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+            <button onclick="spPlayPause()" id="sp-playpause-btn" style="background:#1DB954;border:none;color:#000;width:40px;height:40px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">⏸</button>
+            <button onclick="spStop()" style="background:none;border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Stop">⏹</button>
+            <input type="range" id="sp-volume" min="0" max="100" value="80" oninput="spSetVolume(this.value)" style="flex:1;accent-color:#1DB954;">
+            <span style="font-size:.8rem;color:var(--text-muted);">🔊</span>
+          </div>
+        </div>
+      </div>
+      <!-- Placeholder als geen nummer geladen -->
+      <div id="spotify-placeholder" style="background:var(--card-bg);border:2px dashed rgba(30,215,96,.2);border-radius:20px;padding:2rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--text-muted);">
+        <div style="font-size:3rem;">🎵</div>
+        <div>Druk op "Volgend nummer" om te starten</div>
+      </div>
+    </div>
+
+    <!-- Now playing -->
+    <div class="now-playing">
+      <div class="np-label">Nu gespeeld</div>
+      <div class="np-title" id="np-title">Druk op "Volgend nummer" om te starten</div>
+      <div class="np-artist" id="np-artist"></div>
+      <div class="np-count" id="np-count"></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-gold btn-big" onclick="drawNext()">▶ Volgend nummer</button>
+      <button class="btn btn-teal" onclick="resetGame()">↺ Nieuw spel</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Getrokken nummers</div>
+      <div class="called-list" id="called-list"></div>
+    </div>
+
+    <div id="play-cards-search" style="margin-bottom:1rem;display:none;">
+      <input type="text" placeholder="🔍 Zoek speler..." oninput="renderPlayCards(this.value)" style="max-width:280px;">
+    </div>
+    <div class="play-cards-grid" id="play-cards"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');s.className='star';
+    const sz=Math.random()*2.5+.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${2+Math.random()*4}s;--op:${.3+Math.random()*.6};animation-delay:${Math.random()*4}s`;
+    c.appendChild(s);
+  }
+})();
+
+let songs=[],cards=[],calledSongs=[],remaining=[];
+let isPlaying=false,isMuted=false;
+
+function saveSongs(){try{localStorage.setItem('muziekbingo_songs',JSON.stringify(songs));}catch(e){}}
+function loadSavedSongs(){try{const d=localStorage.getItem('muziekbingo_songs');if(d){songs=JSON.parse(d);}}catch(e){}}
+
+const DEMO=[
+  ["Bohemian Rhapsody","Queen","https://open.spotify.com/track/7tFiyTwD0nx5a1eklYtX2J"],
+  ["Billie Jean","Michael Jackson","https://open.spotify.com/track/5ChkMS8OtdzJeqyybCc9R5"],
+  ["Sweet Child O' Mine","Guns N' Roses","https://open.spotify.com/track/7snQQk1zcKl8gZ92AnueZW"],
+  ["Rolling in the Deep","Adele","https://open.spotify.com/track/4b9vGJMOqUFKFGPOlBfMFT"],
+  ["Shape of You","Ed Sheeran","https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3"],
+  ["Blinding Lights","The Weeknd","https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b"],
+  ["Happy","Pharrell Williams","https://open.spotify.com/track/60nZcImufyMA1MKQY3dcCH"],
+  ["Uptown Funk","Bruno Mars","https://open.spotify.com/track/32OlwWuMpZ6b0aN2RZOeMS"],
+  ["Watermelon Sugar","Harry Styles","https://open.spotify.com/track/6UelLqGlWMcVH1E5c4H7lY"],
+  ["Bad Guy","Billie Eilish","https://open.spotify.com/track/2Fxmhks0bxGSBdJ92vM42m"],
+  ["Shallow","Lady Gaga","https://open.spotify.com/track/2VxeLyX666F8uXCJ0dZF8B"],
+  ["Despacito","Luis Fonsi","https://open.spotify.com/track/6habFhsOp2NvshLv26DqMb"],
+  ["Havana","Camila Cabello","https://open.spotify.com/track/0ofbQMrRDsUaVKq2mGLEAb"],
+  ["Seven Nation Army","The White Stripes","https://open.spotify.com/track/2UK2ykKWFL1HgkPlBaef4i"],
+  ["Mr. Brightside","The Killers","https://open.spotify.com/track/3n3Ppam7vgaVa1iaRUIOKE"],
+  ["Africa","Toto","https://open.spotify.com/track/2374M0fQpWi3dLnB54qaLX"],
+  ["Don't Stop Believin'","Journey","https://open.spotify.com/track/4bHsxqR3GMrXTxEPLuK5ue"],
+  ["Eye of the Tiger","Survivor","https://open.spotify.com/track/2HHtWyy5CgaQbC7XSoOb0e"],
+  ["Take On Me","a-ha","https://open.spotify.com/track/2WfaOiMkCvy7F5fcp2zZ8L"],
+  ["Dancing Queen","ABBA","https://open.spotify.com/track/0GjEhVFGZW8afUYGChu3Rr"],
+  ["Livin' on a Prayer","Bon Jovi","https://open.spotify.com/track/37gAZnHfKKgpIlgSqKB4XV"],
+  ["Sweet Home Alabama","Lynyrd Skynyrd","https://open.spotify.com/track/7yCPMQyUNCFQNnFPNVIb7G"],
+  ["Roxanne","The Police","https://open.spotify.com/track/3QGsuHI8jO1Rx4JWLUh9jd"],
+  ["Hotel California","Eagles","https://open.spotify.com/track/40riOy7x9W7GXjyGp4pjAv"],
+  ["Smells Like Teen Spirit","Nirvana","https://open.spotify.com/track/5ghIJDpPoe3CfHMGu71E6T"],
+  ["Someone Like You","Adele","https://open.spotify.com/track/1zwMYTA5nlNjZxYrvBB2pV"],
+  ["Old Town Road","Lil Nas X","https://open.spotify.com/track/2YpeDb67231RjR0MgVLzsG"],
+  ["Can't Stop the Feeling","Justin Timberlake","https://open.spotify.com/track/6KylHW6PmM6E2FhQtOiQGy"],
+  ["Jump","Van Halen","https://open.spotify.com/track/4d6wEYhBMkRnVLbGshxNxh"],
+  ["Girls Just Want to Have Fun","Cyndi Lauper","https://open.spotify.com/track/7vNFRSNSVaZUfLB5mwXxlb"]
+];
+
+const AVATARS=['🎸','🎹','🎺','🎻','🥁','🎷','🎤','🎵'];
+
+function extractSpotifyId(url){
+  if(!url)return null;
+  const m=url.match(/spotify\.com\/track\/([A-Za-z0-9]+)/)||url.match(/spotify:track:([A-Za-z0-9]+)/);
+  return m?m[1]:null;
+}
+
+// ── Spotify Web Playback SDK ──
+// Vul hieronder jouw Spotify Client ID in (zie instructies)
+const SPOTIFY_CLIENT_ID = '08da228407984f76887a040ca7f0a2ee';
+const REDIRECT_URI = 'https://riemer.github.io';
+
+let spotifyPlayer=null, spotifyDeviceId=null, spotifyToken=null;
+let currentSpotifyId=null;
+let sdkReady=false;
+
+// ── Spotify PKCE Auth ──
+function base64url(buf){
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function generatePKCE(){
+  const arr=new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  const verifier=base64url(arr);
+  const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));
+  const challenge=base64url(hash);
+  return{verifier,challenge};
+}
+
+async function spotifyLogin(){
+  const {verifier,challenge}=await generatePKCE();
+  // Sla verifier op — na redirect komen we terug op dezelfde pagina (GitHub Pages)
+  sessionStorage.setItem('sp_verifier',verifier);
+  localStorage.setItem('sp_verifier',verifier); // backup
+  const scopes='streaming user-read-email user-read-private user-modify-playback-state';
+  const url='https://accounts.spotify.com/authorize'
+    +'?response_type=code'
+    +'&client_id='+SPOTIFY_CLIENT_ID
+    +'&scope='+encodeURIComponent(scopes)
+    +'&redirect_uri='+encodeURIComponent(REDIRECT_URI)
+    +'&code_challenge_method=S256'
+    +'&code_challenge='+challenge;
+  location.href=url;
+}
+
+async function handleCallback(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get('code');
+  if(!code)return null;
+  // Haal verifier op (probeer beide storage)
+  const verifier=sessionStorage.getItem('sp_verifier')||localStorage.getItem('sp_verifier');
+  if(!verifier){
+    showSpError('Sessiefout: sluit de browser, open de app opnieuw en log opnieuw in.');
+    return null;
+  }
+  history.replaceState(null,'',location.pathname);
+  sessionStorage.removeItem('sp_verifier');
+  localStorage.removeItem('sp_verifier');
+  const resp=await fetch('https://accounts.spotify.com/api/token',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({
+      grant_type:'authorization_code',
+      code,
+      redirect_uri:REDIRECT_URI,
+      client_id:SPOTIFY_CLIENT_ID,
+      code_verifier:verifier
+    })
+  });
+  if(!resp.ok){
+    const err=await resp.json().catch(()=>({}));
+    showSpError('Inlogfout: '+(err.error_description||resp.status)+'. Probeer opnieuw in te loggen.');
+    return null;
+  }
+  const data=await resp.json();
+  const tok=data.access_token;
+  localStorage.setItem('sp_token',tok);
+  localStorage.setItem('sp_token_exp',String(Date.now()+data.expires_in*1000));
+  if(data.refresh_token)localStorage.setItem('sp_refresh',data.refresh_token);
+  return tok;
+}
+
+function getStoredToken(){
+  const tok=localStorage.getItem('sp_token');
+  const exp=parseInt(localStorage.getItem('sp_token_exp')||'0');
+  if(tok&&Date.now()<exp-60000)return tok; // 1 min marge
+  return null;
+}
+
+function initSpotifySDK(token){
+  spotifyToken=token;
+  document.getElementById('sp-loading').style.display='block';
+  document.getElementById('sp-login-box').style.display='none';
+  document.getElementById('spotify-placeholder').style.display='none';
+
+  window.onSpotifyWebPlaybackSDKReady=()=>{
+    spotifyPlayer=new Spotify.Player({
+      name:'Muziek Bingo',
+      getOAuthToken:cb=>cb(token),
+      volume:0.8
+    });
+    spotifyPlayer.addListener('ready',({device_id})=>{
+      spotifyDeviceId=device_id;
+      sdkReady=true;
+      document.getElementById('sp-loading').style.display='none';
+      document.getElementById('spotify-placeholder').style.display='flex';
+      console.log('Spotify klaar, device:',device_id);
+      // Als er al een nummer in de wachtrij stond, speel het nu
+      if(currentSpotifyId)playSpotifyTrack(currentSpotifyId);
+    });
+    spotifyPlayer.addListener('player_state_changed',(state)=>{
+      if(!state)return;
+      const track=state.track_window.current_track;
+      document.getElementById('sp-track-name').textContent=track.name;
+      document.getElementById('sp-track-artist').textContent=track.artists.map(a=>a.name).join(', ');
+      if(track.album.images[0])document.getElementById('sp-cover').src=track.album.images[0].url;
+      document.getElementById('sp-playpause-btn').textContent=state.paused?'▶':'⏸';
+    });
+    spotifyPlayer.addListener('initialization_error',({message})=>showSpError('Init fout: '+message));
+    spotifyPlayer.addListener('authentication_error',()=>{
+      localStorage.removeItem('sp_token');showSpError('Sessie verlopen — log opnieuw in.');
+      setTimeout(()=>{document.getElementById('sp-login-box').style.display='flex';},1500);
+    });
+    spotifyPlayer.addListener('account_error',()=>showSpError('Spotify Premium vereist voor afspelen.'));
+    spotifyPlayer.connect();
+  };
+
+  const script=document.createElement('script');
+  script.src='https://sdk.scdn.co/spotify-player.js';
+  document.head.appendChild(script);
+}
+
+function showSpError(msg){
+  document.getElementById('sp-loading').style.display='none';
+  document.getElementById('spotify-placeholder').style.display='flex';
+  document.getElementById('spotify-placeholder').innerHTML='<div style="font-size:1.5rem;">⚠️</div><div>'+msg+'</div>';
+}
+
+function playSpotifyTrack(trackId){
+  if(!sdkReady||!spotifyDeviceId||!spotifyToken){
+    currentSpotifyId=trackId; // bewaar voor later als SDK nog laadt
+    return;
+  }
+  fetch('https://api.spotify.com/v1/me/player/play?device_id='+spotifyDeviceId,{
+    method:'PUT',
+    headers:{'Authorization':'Bearer '+spotifyToken,'Content-Type':'application/json'},
+    body:JSON.stringify({uris:['spotify:track:'+trackId]})
+  }).then(r=>{
+    if(r.ok){
+      document.getElementById('spotify-placeholder').style.display='none';
+      document.getElementById('sp-player-ui').style.display='flex';
+    } else {
+      r.json().then(d=>showSpError('Fout: '+(d.error&&d.error.message||r.status)));
+    }
+  }).catch(()=>showSpError('Netwerkfout bij afspelen.'));
+}
+
+function loadSpotify(spotifyId){
+  currentSpotifyId=spotifyId||null;
+  if(!spotifyId)return;
+  if(sdkReady)playSpotifyTrack(spotifyId);
+  // anders wacht ready-listener en speelt het af zodra SDK klaar is
+}
+
+function spPlayPause(){
+  if(spotifyPlayer)spotifyPlayer.togglePlay();
+}
+function spStop(){
+  if(spotifyPlayer)spotifyPlayer.pause();
+  document.getElementById('sp-player-ui').style.display='none';
+  document.getElementById('spotify-placeholder').style.display='flex';
+}
+function spSetVolume(v){
+  if(spotifyPlayer)spotifyPlayer.setVolume(v/100);
+}
+
+function openSpotifyTab(){
+  if(!currentSpotifyId)return;
+  window.open('https://open.spotify.com/track/'+currentSpotifyId,'_blank','noopener');
+}
+
+// Start SDK bij laden
+document.addEventListener('DOMContentLoaded',async()=>{
+  let tok=null;
+  if(location.search.includes('code=')||location.search.includes('error=')){
+    // Terugkeer van Spotify login
+    document.getElementById('sp-loading').style.display='block';
+    document.getElementById('sp-login-box').style.display='none';
+    document.getElementById('spotify-placeholder').style.display='none';
+    if(location.search.includes('error=')){
+      const e=new URLSearchParams(location.search).get('error');
+      history.replaceState(null,'',location.pathname);
+      showSpError('Inloggen geannuleerd of mislukt: '+e);
+      return;
+    }
+    tok=await handleCallback();
+  }
+  if(!tok)tok=getStoredToken();
+  if(tok){
+    initSpotifySDK(tok);
+  } else {
+    document.getElementById('sp-loading').style.display='none';
+    document.getElementById('spotify-placeholder').style.display='none';
+    document.getElementById('sp-login-box').style.display='flex';
+  }
+});
+
+function showTab(name,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  el.classList.add('active');
+}
+
+function addSong(){
+  const t=document.getElementById('inp-title').value.trim();
+  const a=document.getElementById('inp-artist').value.trim();
+  const y=document.getElementById('inp-spotify').value.trim();
+  if(!t)return;
+  songs.push([t,a,y]);
+  document.getElementById('inp-title').value='';
+  document.getElementById('inp-artist').value='';
+  document.getElementById('inp-spotify').value='';
+  document.getElementById('inp-title').focus();
+  saveSongs();renderSongs();
+}
+
+function loadDemo(){songs=DEMO.map(d=>[...d]);saveSongs();renderSongs();}
+function clearSongs(){if(!confirm('Weet je zeker dat je alle nummers wilt verwijderen?'))return;songs=[];saveSongs();renderSongs();}
+
+function renderSongs(){
+  const ul=document.getElementById('song-list');
+  const sc=document.getElementById('song-count');
+  const spc=document.getElementById('sp-count-badge');
+  const withSP=songs.filter(s=>extractSpotifyId(s[2])).length;
+  spc.textContent=songs.length?`— ${withSP} van ${songs.length} met Spotify clip`:'';
+  if(!songs.length){
+    ul.innerHTML='<li class="song-item"><span style="color:var(--text-muted);font-size:.9rem;">Geen nummers toegevoegd.</span></li>';
+    sc.innerHTML='';return;
+  }
+  ul.innerHTML=songs.map((s,i)=>`
+    <li class="song-item">
+      <span class="song-num">${i+1}.</span>
+      <span class="song-info">
+        <div class="stitle">${esc(s[0])}</div>
+        ${s[1]?`<div class="artist">${esc(s[1])}</div>`:''}
+        <div class="sp-inline">
+          <input type="url" value="${esc(s[2]||'')}" placeholder="Spotify link toevoegen... (open.spotify.com/track/...)" onchange="songs[${i}][2]=this.value;saveSongs();renderSongs()" style="font-size:.8rem;padding:6px 10px;border-radius:8px;">
+        </div>
+      </span>
+      ${extractSpotifyId(s[2])?'<span class="sp-badge">▶ Spotify</span>':'<span class="no-sp-badge">geen clip</span>'}
+      <button class="del-btn" onclick="removeSong(${i})">✕</button>
+    </li>`).join('');
+  const ok=songs.length>=25;
+  sc.innerHTML=`<span class="stat-badge ${ok?'':'warn'}">${ok?'✓':''} ${songs.length} nummer${songs.length!==1?'s':''} ${ok?'— klaar':'— nog '+(25-songs.length)+' nodig'}</span>`;
+}
+
+function exportSongs(){
+  const blob=new Blob([JSON.stringify(songs,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='muziekbingo_nummers.json';
+  a.click();URL.revokeObjectURL(a.href);
+}
+function importSongs(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!Array.isArray(data))throw new Error();
+      const merge=confirm(`Bestand bevat ${data.length} nummers.\n\nKlik OK om samen te voegen met huidige lijst.\nKlik Annuleren om de huidige lijst te vervangen.`);
+      if(merge){songs=[...songs,...data];}else{songs=data;}
+      saveSongs();renderSongs();
+    }catch(err){alert('Ongeldig bestand. Importeer een eerder geëxporteerd muziekbingo_nummers.json bestand.');}
+    e.target.value='';
+  };
+  r.readAsText(file);
+}
+
+function removeSong(i){songs.splice(i,1);saveSongs();renderSongs();}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function generateCard(){const s=shuffle(songs).slice(0,24);s.splice(12,0,null);return s;}
+
+function generateCards(){
+  if(songs.length<25){document.getElementById('cards-status').innerHTML='<span class="stat-badge warn">⚠️ Voeg eerst minimaal 25 nummers toe!</span>';return;}
+  let n=parseInt(document.getElementById('num-players').value)||2;
+  n=Math.max(1,Math.min(100,n));
+  cards=Array.from({length:n},(_,i)=>({name:`Speler ${i+1}`,cells:generateCard()}));
+  renderPreviewCards();
+  document.getElementById('cards-status').innerHTML=`<span class="stat-badge">✓ ${n} kaart${n>1?'en':''} aangemaakt!${n>20?' Gebruik de zoekbalk om te filteren.':''}</span>`;
+  document.getElementById('btn-print').style.display='inline-flex';
+  document.getElementById('btn-print4').style.display='inline-flex';
+  remaining=[...songs];calledSongs=[];
+}
+
+function renderPreviewCards(filter=''){
+  const c=document.getElementById('cards-container');
+  const filtered=cards.map((card,ci)=>({card,ci})).filter(({card})=>card.name.toLowerCase().includes(filter.toLowerCase()));
+  const bar=cards.length>8?`<div style="margin-bottom:1rem;"><input type="text" placeholder="🔍 Zoek speler..." oninput="renderPreviewCards(this.value)" style="max-width:280px;" value="${esc(filter)}"></div>`:'';
+  c.innerHTML=bar+`<div class="cards-grid">${filtered.map(({card,ci})=>`
+    <div class="player-card">
+      <div class="player-card-header">
+        <div class="avatar">${AVATARS[ci%AVATARS.length]}</div>
+        <div><input class="player-name-input" value="${esc(card.name)}" onchange="cards[${ci}].name=this.value">
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px;">Kaart #${ci+1}</div></div>
+      </div>
+      <div class="bingo-header-row">${'BINGO'.split('').map(l=>`<div class="bingo-letter">${l}</div>`).join('')}</div>
+      <div class="bingo-mini-grid">${card.cells.map(s=>s===null?'<div class="mini-cell free">★</div>':`<div class="mini-cell">${esc(s[0].length>14?s[0].substring(0,12)+'…':s[0])}</div>`).join('')}</div>
+    </div>`).join('')}</div>`;
+}
+
+function buildCardTable(card,mini=false){
+  const cls=mini?'bingo-table mini':'bingo-table';
+  return`<table class="${cls}">
+    <thead><tr>${'BINGO'.split('').map(l=>`<th>${l}</th>`).join('')}</tr></thead>
+    <tbody>${[0,1,2,3,4].map(row=>`<tr>${[0,1,2,3,4].map(col=>{
+      const s=card.cells[row*5+col];
+      if(s===null)return`<td class="free">\u2605<br><span>VRIJ</span></td>`;
+      return`<td><div class="cell-title">${esc(s[0])}</div>${s[1]?`<div class="cell-artist">${esc(s[1])}</div>`:''}`;
+    }).join('')}</tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function printCards(perPage){
+  if(!cards.length){alert('Genereer eerst kaarten!');return;}
+  const layout=perPage||1;
+  const win=window.open('','_blank');
+  let bodyHTML='';
+  if(layout===1){
+    bodyHTML=cards.map((card,ci)=>`
+      <div class="page">
+        <div class="card-single">
+          <div class="card-header">
+            <div class="card-title">\u2665 Muziek Bingo</div>
+            <div class="card-name">${esc(card.name)}</div>
+            <div class="card-sub">Kaart #${ci+1}</div>
+          </div>
+          ${buildCardTable(card,false)}
+        </div>
+      </div>`).join('');
+  } else {
+    const pages=[];
+    for(let i=0;i<cards.length;i+=4) pages.push(cards.slice(i,i+4).map((c,j)=>({card:c,ci:i+j})));
+    bodyHTML=pages.map(group=>`
+      <div class="page grid4">
+        ${group.map(({card,ci})=>`
+          <div class="card-mini">
+            <div class="mini-header">
+              <span class="mini-label">Muziek Bingo</span>
+              <span class="mini-name">${esc(card.name)}</span>
+              <span class="mini-sub">#${ci+1}</span>
+            </div>
+            ${buildCardTable(card,true)}
+            <div class="cut-hint">✂</div>
+          </div>`).join('')}
+      </div>`).join('');
+  }
+  win.document.write(`<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8">
+  <title>Muziek Bingo – Kaarten</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Georgia,serif;background:#fff;color:#111}
+    .page{page-break-after:always}
+    .page:last-child{page-break-after:auto}
+    /* 1 per pagina */
+    .card-single{width:185mm;margin:0 auto;padding:10mm 0;display:flex;flex-direction:column;align-items:center;min-height:270mm;justify-content:center}
+    .card-header{text-align:center;margin-bottom:7mm;width:100%}
+    .card-title{font-size:15pt;font-weight:bold;letter-spacing:2px;color:#8B6914;margin-bottom:2mm}
+    .card-name{font-size:22pt;font-weight:bold;margin-bottom:1mm}
+    .card-sub{font-size:10pt;color:#888}
+    .bingo-table{width:100%;border-collapse:collapse;table-layout:fixed}
+    .bingo-table th{background:#1a1330;color:#F0C040;font-family:Georgia,serif;font-size:20pt;font-weight:bold;text-align:center;padding:4mm 0;border:2px solid #1a1330}
+    .bingo-table td{border:2px solid #ccc;text-align:center;vertical-align:middle;padding:3mm;height:33mm}
+    .bingo-table td.free{background:#f5f0ff;font-size:20pt;color:#7B5EA7;font-weight:bold}
+    .bingo-table td.free span{display:block;font-size:9pt;color:#7B5EA7;margin-top:1mm}
+    .cell-title{font-size:9.5pt;font-weight:bold;line-height:1.3}
+    .cell-artist{font-size:8pt;color:#555;margin-top:1mm;line-height:1.2}
+    /* 4 per pagina */
+    .grid4{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:0;width:210mm;height:297mm;padding:6mm}
+    .card-mini{display:flex;flex-direction:column;border:1px solid #bbb;margin:2mm;position:relative;overflow:hidden}
+    .mini-header{background:#1a1330;color:#F0C040;display:flex;align-items:center;gap:3mm;padding:2mm 3mm}
+    .mini-label{font-size:6.5pt;letter-spacing:.5px;opacity:.75;white-space:nowrap}
+    .mini-name{font-size:9.5pt;font-weight:bold;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mini-sub{font-size:6.5pt;opacity:.7;white-space:nowrap}
+    .card-mini .bingo-table{flex:1;width:100%}
+    .card-mini .bingo-table th{font-size:9pt;padding:1.5mm 0;background:#1a1330;color:#F0C040;border:1px solid #1a1330}
+    .card-mini .bingo-table td{border:1px solid #ddd;padding:1mm;height:auto;vertical-align:middle}
+    .card-mini .bingo-table td.free{font-size:11pt;background:#f5f0ff;color:#7B5EA7;font-weight:bold}
+    .card-mini .bingo-table td.free span{font-size:5.5pt}
+    .card-mini .cell-title{font-size:6pt;font-weight:bold;line-height:1.25}
+    .card-mini .cell-artist{font-size:5pt;color:#666;margin-top:.5mm}
+    .cut-hint{display:none}
+    @media print{
+      @page{size:A4 portrait;margin:0}
+      body{margin:0}
+      .grid4{gap:0;padding:5mm}
+      .card-mini{border:1px dashed #aaa}
+    }
+  </style></head><body>${bodyHTML}
+  <scr'+'ipt>window.onload=function(){window.print();}</scr'+'ipt>
+  </body></html>`);
+  win.document.close();
+}
+
+function drawNext(){
+  if(!cards.length){alert('Genereer eerst kaarten via het tabblad "Kaarten"!');return;}
+  if(!remaining.length){document.getElementById('np-title').textContent='Alle nummers zijn gespeeld!';return;}
+  const idx=Math.floor(Math.random()*remaining.length);
+  const song=remaining.splice(idx,1)[0];
+  calledSongs.unshift(song);
+
+  const title=document.getElementById('np-title');
+  const artist=document.getElementById('np-artist');
+  title.style.opacity='0';title.style.transform='translateY(10px)';artist.style.opacity='0';
+  setTimeout(()=>{
+    title.textContent=song[0];artist.textContent=song[1]||'';
+    title.style.transition='opacity .4s,transform .4s';title.style.opacity='1';title.style.transform='none';
+    artist.style.transition='opacity .4s';artist.style.opacity='1';
+  },150);
+
+  const pct=Math.round(calledSongs.length/songs.length*100);
+  document.getElementById('np-count').textContent=`${calledSongs.length} van ${songs.length} nummers getrokken`;
+  document.getElementById('progress-fill').style.width=pct+'%';
+
+  loadSpotify(extractSpotifyId(song[2]));
+  renderCalledChips();
+  renderPlayCards();
+  checkWin();
+  spawnNotes();
+}
+
+function spawnNotes(){
+  const notes=['♪','♫','♩','♬','♭','♮'];
+  for(let i=0;i<3;i++) setTimeout(()=>{
+    const el=document.createElement('div');el.className='note-float';
+    el.textContent=notes[Math.floor(Math.random()*notes.length)];
+    el.style.left=Math.random()*90+'vw';el.style.bottom='10vh';
+    el.style.animationDuration=(4+Math.random()*3)+'s';
+    document.body.appendChild(el);setTimeout(()=>el.remove(),7000);
+  },i*200);
+}
+
+function renderCalledChips(){
+  document.getElementById('called-list').innerHTML=calledSongs.map((s,i)=>
+    `<span class="called-chip${i===0?' latest':''}">${esc(s[0])}</span>`).join('');
+}
+
+function renderPlayCards(filter=''){
+  if(cards.length>8)document.getElementById('play-cards-search').style.display='block';
+  const c=document.getElementById('play-cards');
+  const filtered=cards.map((card,ci)=>({card,ci})).filter(({card})=>card.name.toLowerCase().includes(filter.toLowerCase()));
+  c.innerHTML=filtered.map(({card,ci})=>{
+    const marks=card.cells.map(s=>s===null||calledSongs.some(cs=>cs[0]===s[0]&&cs[1]===s[1]));
+    const hasBingo=checkCardBingo(marks);
+    return `<div class="play-card${hasBingo?' has-bingo':''}" id="pc-${ci}">
+      <div class="play-card-header">
+        <div class="avatar">${AVATARS[ci%AVATARS.length]}</div>
+        <div><div style="font-family:'Playfair Display',serif;font-weight:700;">${esc(card.name)}</div>
+        <div style="font-size:.75rem;color:var(--text-muted);">Kaart #${ci+1} · ${marks.filter(Boolean).length-1} aangevinkt</div></div>
+        ${hasBingo?'<span style="margin-left:auto;font-size:1.2rem;">🏆</span>':''}
+      </div>
+      <div class="bingo-header-row">${'BINGO'.split('').map(l=>`<div class="bingo-letter" style="font-size:.85rem;">${l}</div>`).join('')}</div>
+      <div class="bingo-mini-grid">${card.cells.map((s,si)=>{
+        const free=s===null,marked=free||calledSongs.some(cs=>cs[0]===s[0]);
+        const win=hasBingo&&checkCellInWinLine(si,card.cells.map(x=>x===null||calledSongs.some(cs=>cs[0]===x[0])));
+        return `<div class="mini-cell${free?' free':marked?' marked':''}${win?' bingo-win':''}">${free?'★':esc(s[0].length>12?s[0].substring(0,10)+'…':s[0])}</div>`;
+      }).join('')}</div></div>`;
+  }).join('');
+}
+
+function checkCardBingo(marks){
+  const P=[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],
+           [0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],
+           [0,6,12,18,24],[4,8,12,16,20]];
+  return P.some(p=>p.every(i=>marks[i]));
+}
+function checkCellInWinLine(si,marks){
+  const P=[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],
+           [0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],
+           [0,6,12,18,24],[4,8,12,16,20]];
+  return P.some(p=>p.includes(si)&&p.every(i=>marks[i]));
+}
+
+function checkWin(){
+  const winners=[];
+  cards.forEach(card=>{
+    const marks=card.cells.map(s=>s===null||calledSongs.some(cs=>cs[0]===s[0]&&cs[1]===s[1]));
+    if(checkCardBingo(marks))winners.push(card.name);
+  });
+  const banner=document.getElementById('win-banner');
+  if(winners.length){
+    banner.style.display='block';
+    document.getElementById('win-name').textContent=winners.join(', ')+(winners.length===1?' heeft gewonnen!':' hebben gewonnen!');
+  }
+}
+
+function resetGame(){
+  calledSongs=[];remaining=[...songs];
+  document.getElementById('np-title').textContent='Druk op "Volgend nummer" om te starten';
+  document.getElementById('np-artist').textContent='';
+  document.getElementById('np-count').textContent='';
+  document.getElementById('progress-fill').style.width='0%';
+  document.getElementById('called-list').innerHTML='';
+  document.getElementById('win-banner').style.display='none';
+  currentSpotifyId=null;
+  if(spotifyPlayer)spotifyPlayer.pause();
+  const ui=document.getElementById('sp-player-ui');
+  if(ui)ui.style.display='none';
+  const ph=document.getElementById('spotify-placeholder');
+  if(ph){ph.style.display='flex';ph.innerHTML='<div style="font-size:3rem;">🎵</div><div>Druk op \"Volgend nummer\" om te starten</div>';}
+  if(cards.length){cards=cards.map(c=>({...c,cells:generateCard()}));renderPlayCards();}
+}
+
+loadSavedSongs();renderSongs();
+</script>
+</body>
+</html>
